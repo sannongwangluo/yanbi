@@ -104,4 +104,4 @@ voice_input.log      运行日志（运行中生成，已 gitignore）
 
 ## License
 
-[MIT](LICENSE) © 2026 sannongwangluo
+[MIT](LICENSE) © 2026 杭州三农网络科技有限公司
