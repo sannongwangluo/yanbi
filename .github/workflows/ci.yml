@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  smoke:
+    name: Smoke (py_compile)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Compile check
+        run: python -m py_compile voice_input.py volc_asr.py
+
+  build:
+    name: Build YanBi.exe
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+      - name: Build exe
+        run: |
+          pyinstaller --noconfirm --onefile --windowed -n YanBi --add-data "chime_start.wav;." --add-data "chime_end.wav;." --collect-all sounddevice voice_input.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YanBi-exe
+          path: dist/YanBi.exe
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/YanBi.exe
