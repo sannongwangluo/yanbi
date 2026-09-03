@@ -7,8 +7,9 @@
 解码，静音/噪声会返回空音频错误码（45000002），不会幻觉出文本。
 
 协议（火山方舟《接入语音模型》官方文档）：
-- WebSocket 端点默认 `wss://openspeech.bytedance.com/api/v3/plan/sauc/bigmodel_async`
-  （双向流式优化版），鉴权失败时回退 `wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async`；
+- WebSocket 端点默认 `wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_nostream`
+  （流式整段识别版），失败时回退 `wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async`
+  （双向流式优化版）；`/plan/` 变体对语音控制台 key 握手 401，不用；
 - 鉴权 HTTP header：X-Api-Key / X-Api-Resource-Id: volc.seedasr.sauc.duration /
   X-Api-Request-Id / X-Api-Connect-Id（随机 UUID）/ X-Api-Sequence: -1；
 - 二进制帧（大端）：4 字节头（version<<4|header_size / message_type<<4|flags /
@@ -89,7 +90,7 @@ FALLBACK_URL = "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async"
 DEFAULT_RESOURCE_ID = "volc.seedasr.sauc.duration"
 DEFAULT_SAMPLE_RATE = 16000
 DEFAULT_CHUNK_MS = 200          # 200ms/包
-DEFAULT_UID = "realtime-eye"
+DEFAULT_UID = "voice-input"
 
 # 空音频错误码（服务端对纯静音段返回此码，非鉴权/网络错误，按空串处理）
 EMPTY_AUDIO_CODE = 45000002
