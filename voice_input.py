@@ -26,7 +26,7 @@ DeepSeek 整理成书面语（默认开，>=20 字才整理，失败自动用原
 - 语音模板 snippets.txt（发X 命令上屏，支持 {日期}/{时间}/{星期}）+ 浮窗 ⚙ 设置窗口。
 
 引擎说明（2026-08-26）：本地 whisper 已彻底移除（代码 + 模型 + 包），唯一引擎为
-火山引擎豆包大模型流式语音识别（复用 realtime-eye 的 VolcASR，服务端对静音直接返回
+火山引擎豆包大模型流式语音识别（复用流式 ASR 依赖库的 VolcASR，服务端对静音直接返回
 空音频，无幻觉）。直接 python voice_input.py 即用，需在环境变量 VOLC_API_KEY 配置
 语音技术控制台签发的 API key。
 """
@@ -41,9 +41,15 @@ import time
 import numpy as np
 import sounddevice as sd
 
-# ---- 流式 ASR 底层：复用 realtime-eye 的 cloud_asr 协议函数 ----
-# （websockets 同步客户端已随 realtime-eye 的 .venv-gpu 装好，voice_input 用同一 venv 跑）
-sys.path.insert(0, r"D:\数字合伙人\AI工作台\realtime-eye\src")
+# ---- 流式 ASR 底层：复用流式 ASR 依赖库的 cloud_asr 协议函数 ----
+# 依赖库源码目录：优先读环境变量 REALTIME_EYE_SRC，未设置时回退到与本脚本同级的
+# ../realtime-eye/src（websockets 同步客户端随依赖库虚拟环境安装，共用同一 venv）。
+_REALTIME_EYE_SRC = os.environ.get(
+    "REALTIME_EYE_SRC",
+    os.path.normpath(os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "realtime-eye", "src")),
+)
+sys.path.insert(0, _REALTIME_EYE_SRC)
 try:
     from realtime_eye.cloud_asr import (
         build_full_request,
@@ -71,10 +77,10 @@ LOG_PATH = os.path.join(BASE_DIR, "voice_input.log")
 
 # 热词表（corpus.context 直传 + LLM 整理白名单的单一来源）：运行时从同目录 hotwords.txt 读
 # （UTF-8，一行一词，忽略空行和 # 注释），文件不存在时用默认词初始化创建。
+# 下面是默认示例词（首次运行会写入 hotwords.txt，可自行增删替换），仅作演示：
 DEFAULT_HOTWORDS = (
-    "璇玑", "星灵", "DSH", "Harness", "Kimi", "DeepSeek",
-    "贾维斯", "红后", "GitHub", "realtime-eye", "类脑记忆", "openclaw",
-    "agent", "MCP",
+    "大模型", "工作流", "API", "语音识别", "接口",
+    "多模态", "向量库", "提示词", "部署", "开源",
 )
 HOTWORDS_PATH = os.path.join(BASE_DIR, "hotwords.txt")
 
@@ -666,8 +672,8 @@ class VoiceInput:
         self.engine = "volc"
         self.polish_enabled = polish  # 是否在转写后做 DeepSeek 书面语整理
         self._volc = None
-        # 复用 realtime-eye 的 VolcASR（websockets 同步客户端，.venv-gpu 已装）
-        sys.path.insert(0, r"D:\数字合伙人\AI工作台\realtime-eye\src")
+        # 复用流式 ASR 依赖库的 VolcASR（websockets 同步客户端，随依赖库虚拟环境安装）
+        sys.path.insert(0, _REALTIME_EYE_SRC)
         from realtime_eye.cloud_asr import VolcASR
         from realtime_eye.audio import AudioSegment
         self._audio_segment_cls = AudioSegment
@@ -1066,8 +1072,8 @@ def _open_settings(root):
              font=("微软雅黑", 8), text=(
         "热词 = 你常说、但容易被打错的词（人名、产品名、行话、英文词），一行一个。\n"
         "加进来以后，语音识别会优先往这些词上靠，不再写成同音错字。\n"
-        "例：你叫“璇玑”总被打成“玄机”，把 璇玑 写进来就不会再错。\n"
-        "也可以不动手：直接对着麦克风说“记一下，璇玑”就会加进来。")).pack(
+        "例：你叫“张伟”总被打成“张卫”，把 张伟 写进来就不会再错。\n"
+        "也可以不动手：直接对着麦克风说“记一下，张伟”就会加进来。")).pack(
         fill="x", padx=6, pady=(5, 0))
     hot_text = tk.Text(hot_tab, bg="#1f1f1f", fg="#dddddd", insertbackground="#dddddd",
                        font=("微软雅黑", 10), relief="flat", wrap="none",
@@ -1198,7 +1204,7 @@ _CHIME_CACHE: dict = {}
 
 def _make_chime(kind: str):
     """合成真实水滴音（2026-09-03 改版）：入水瞬态"哒" + 气泡共振指数滑音 + 指数衰减。
-    开始=音高上扬，结束=音高下坠。参数与 生成提示音候选.py 的 A 经典水滴一致。"""
+    开始=音高上扬，结束=音高下坠。参数与调音脚本选定的 A 经典水滴一致。"""
     sr = 24000
     dur, tau_pitch, tau_amp = 0.16, 0.012, 0.030
     f_lo, f_hi = (480, 1500) if kind == "start" else (1500, 480)
@@ -1218,7 +1224,7 @@ def _make_chime(kind: str):
 
 
 def _load_chime_wav(kind: str):
-    """优先用真声 wav（2026-09-03 用户选定 freesound 水滴声，裁剪见 scratch/水滴提示音）：
+    """优先用真声 wav（freesound 水滴声，裁剪自调音脚本）：
     工具目录下 chime_start.wav / chime_end.wav（16bit PCM），不存在返回 None 走合成兜底。"""
     import wave as _wave
 
