@@ -26,7 +26,7 @@ DeepSeek 整理成书面语（默认开，>=20 字才整理，失败自动用原
 - 语音模板 snippets.txt（发X 命令上屏，支持 {日期}/{时间}/{星期}）+ 浮窗 ⚙ 设置窗口。
 
 引擎说明（2026-08-26）：本地 whisper 已彻底移除（代码 + 模型 + 包），唯一引擎为
-火山引擎豆包大模型流式语音识别（复用流式 ASR 依赖库的 VolcASR，服务端对静音直接返回
+火山引擎豆包大模型流式语音识别（复用 volc_asr 模块的 VolcASR，服务端对静音直接返回
 空音频，无幻觉）。直接 python voice_input.py 即用，需在环境变量 VOLC_API_KEY 配置
 语音技术控制台签发的 API key。
 """
@@ -41,22 +41,16 @@ import time
 import numpy as np
 import sounddevice as sd
 
-# ---- 流式 ASR 底层：复用流式 ASR 依赖库的 cloud_asr 协议函数 ----
-# 依赖库源码目录：优先读环境变量 REALTIME_EYE_SRC，未设置时回退到与本脚本同级的
-# ../realtime-eye/src（websockets 同步客户端随依赖库虚拟环境安装，共用同一 venv）。
-_REALTIME_EYE_SRC = os.environ.get(
-    "REALTIME_EYE_SRC",
-    os.path.normpath(os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "realtime-eye", "src")),
-)
-sys.path.insert(0, _REALTIME_EYE_SRC)
+# ---- 流式 ASR 底层：复用 volc_asr 模块的协议函数与引擎 ----
 try:
-    from realtime_eye.cloud_asr import (
+    from volc_asr import (
         build_full_request,
         build_audio_request,
         parse_response,
         extract_text,
         frame_to_s16le,
+        VolcASR,
+        AudioSegment,
     )
     from websockets.sync.client import connect as _ws_connect
     from websockets.exceptions import ConnectionClosed as _ConnectionClosed
@@ -67,6 +61,8 @@ except Exception:
     parse_response = None
     extract_text = None
     frame_to_s16le = None
+    VolcASR = None
+    AudioSegment = None
     _ws_connect = None
     _ConnectionClosed = Exception
     _HAS_STREAM_DEPS = False
@@ -520,7 +516,7 @@ class VolcStreamSession:
 
     def start(self):
         if not _HAS_STREAM_DEPS:
-            raise RuntimeError("流式 ASR 依赖（websockets/cloud_asr）不可用")
+            raise RuntimeError("流式 ASR 依赖（websockets/volc_asr）不可用")
         if not self._volc.available:
             raise RuntimeError(f"volc 引擎不可用：{self._volc._error}")
         self._ws = _ws_connect(
@@ -672,10 +668,7 @@ class VoiceInput:
         self.engine = "volc"
         self.polish_enabled = polish  # 是否在转写后做 DeepSeek 书面语整理
         self._volc = None
-        # 复用流式 ASR 依赖库的 VolcASR（websockets 同步客户端，随依赖库虚拟环境安装）
-        sys.path.insert(0, _REALTIME_EYE_SRC)
-        from realtime_eye.cloud_asr import VolcASR
-        from realtime_eye.audio import AudioSegment
+        # 复用 volc_asr 模块的 VolcASR（websockets 同步客户端）
         self._audio_segment_cls = AudioSegment
         self._volc = VolcASR(hotwords=_load_hotwords())
         if not self._volc.available:
