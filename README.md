@@ -1,107 +1,134 @@
-# YanBi 言笔 · 语音输入法
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-Windows 桌面语音输入工具，用来替代系统自带的 Win+H：按下热键开始录音、再按一次结束，转写结果自动粘贴到当前输入焦点处。识别走火山引擎豆包大模型流式语音识别（云端 WebSocket），转写后可选用 DeepSeek 整理成书面语，并带一套热词纠错闭环。
+# YanBi 言笔 · Voice Typing for Windows
 
-## 特性
+A Windows desktop voice-typing tool that replaces the built-in Win+H. Press a hotkey to start recording, press it again to stop, and the transcript is pasted wherever your cursor was. Recognition runs on Volcengine's Doubao streaming speech recognition (cloud WebSocket); the transcript can optionally be polished into written Chinese by DeepSeek, and a hotword loop corrects recurring misrecognitions.
 
-- 火山云端流式 ASR：边录边传，松手即出全文；流式失败自动回退整段识别，绝不丢结果
-- DeepSeek 书面语整理（可关）：按焦点窗口自动切换 `chat` / `doc` / `standard` 三种整理风格
-- 热词闭环：`hotwords.txt` 外置词表直传 ASR（`corpus.context`），支持语音命令「记一下 / 忘掉」，`--learn-words` 从日志挖高频纠正词
-- 语音模板 `snippets.txt`：说「发X」直接上屏一段固定内容，支持 `{日期}` `{时间}` `{星期}`
-- 语音触发词：「正式点」「口语一点」「翻译成英文」实时切换整理风格
-- 置顶无边框浮窗：实时显示状态，麦克风按钮手动触发，齿轮按钮打开设置窗
-- 提示音 `chime_start.wav` / `chime_end.wav`，录音开始/结束有水滴提示音
+> YanBi is a Chinese input tool — voice commands and trigger phrases are spoken in Chinese.
 
-## 工作原理
+## Features
 
-按一下热键开始录音（音频边录边上传火山云端做流式识别，同时本地留底兜底），再按一下结束，云端返回全文；可选走 DeepSeek 整理成书面语，最后把焦点切回目标输入框、模拟 Ctrl+V 粘贴上屏，并恢复原剪贴板内容。任何一步失败都有降级路径，不会丢识别结果。
+- Cloud streaming ASR: audio is streamed as you speak and the full text appears the moment you stop; if streaming fails it falls back to full-utterance recognition, so a result is never lost
+- Optional DeepSeek polishing: automatically picks `chat` / `doc` / `standard` style based on the focused app
+- Hotword loop: an external `hotwords.txt` is passed straight to the ASR (`corpus.context`); say "记一下 / 忘掉" to add or remove words, or run `--learn-words` to mine frequent corrections from the log
+- Voice snippets `snippets.txt`: say "发X" to paste a fixed block, with `{日期}` `{时间}` `{星期}` placeholders
+- Voice triggers: "正式点", "口语一点", "翻译成英文" switch the polish style on the fly
+- Borderless always-on-top float bar: live status, mic button for manual control, gear button opens settings
+- Chime sounds `chime_start.wav` / `chime_end.wav` mark recording start and end
 
-## 与离线方案（如 CapsWriter-Offline）的区别
+## Screenshots
 
-本工具走云端 API，不做本地模型。代价和收益都源于此：
+![Floating bar](docs/images/overlay.png)
 
-- 优点：免下载/加载大模型、识别能力强（服务端做语言模型解码，静音/噪声返回空结果、不会幻觉出文本）、自带书面语整理和热词闭环
-- 缺点：按量付费、需要联网、音频会上传云端
+The floating bar in its ready state: status indicator, hint text, and the mic / gear / close buttons.
 
-如果你介意音频上云，或想要完全离线、一次性买断的体验，选 CapsWriter-Offline 这类本地离线方案更合适。
+![Settings window](docs/images/settings.png)
 
-## 安装
+The settings window: snippets and hotwords tabs.
 
-依赖 Python 3.12+（`requirements.txt` 中 `numpy>=2.5.2` 要求 3.12、`websockets>=17` 要求 3.11；代码语法本身更低，但按依赖下限标注 3.12+）。
+## How it works
+
+Press the hotkey to start recording (audio streams to Volcengine as you speak, with a local copy kept as fallback), press again to stop, and the cloud returns the full transcript. Optionally it goes through DeepSeek for polishing, then focus returns to the target input and the text is pasted via a simulated Ctrl+V, restoring the original clipboard. Every step degrades gracefully, so a recognition result is never lost.
+
+```mermaid
+flowchart LR
+    A[Press hotkey<br/>default Right Ctrl] --> B[Start recording]
+    B --> C[Stream audio to<br/>Volcengine ASR]
+    C --> D{Optional<br/>DeepSeek polish?}
+    D -- yes --> E[Polish into written Chinese]
+    D -- no --> F[Paste via Ctrl+V]
+    E --> F
+    F --> G[Restore clipboard]
+```
+
+## How it compares to offline solutions (e.g. CapsWriter-Offline)
+
+YanBi uses a cloud API — there is no local model. Both the benefits and the costs come from that:
+
+- Pros: no large model to download or load, strong recognition (server-side language-model decoding returns empty results for silence/noise instead of hallucinating text), built-in written-Chinese polishing and hotword loop
+- Cons: pay-per-use, requires internet, audio is uploaded to the cloud
+
+If you'd rather keep audio off the cloud, or want a fully offline, pay-once experience, a local offline tool like CapsWriter-Offline is a better fit.
+
+## Installation
+
+Requires Python 3.12+ (`numpy>=2.5.2` in `requirements.txt` needs 3.12, `websockets>=17` needs 3.11; the code itself runs on lower versions, but 3.12+ is documented to match the dependency floors).
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 配置
+## Configuration
 
-两个 API key 都通过环境变量配置：
+Both API keys are set through environment variables:
 
-| 变量 | 是否必填 | 说明 |
+| Variable | Required | Notes |
 | --- | --- | --- |
-| `VOLC_API_KEY` | 必填 | 火山引擎「语音技术」控制台：创建应用 → 开通「大模型流式语音识别」→ 获取 API Key。官方控制台 <https://console.volcengine.com> |
-| `DEEPSEEK_API_KEY` | 可选 | 不配置时跳过书面语整理、直接上屏识别原文。官方控制台 <https://platform.deepseek.com> |
+| `VOLC_API_KEY` | Yes | Volcengine "Speech technology" console: create an app → enable "Large-model streaming speech recognition" → get the API key. Console: <https://console.volcengine.com> |
+| `DEEPSEEK_API_KEY` | Optional | When unset, polishing is skipped and the raw transcript is pasted. Console: <https://platform.deepseek.com> |
 
-> 计费按量、以官方页面为准，具体价格请见上述控制台。
+> Billing is pay-per-use; see the consoles above for current pricing.
 
-整理开关有三个等价入口：命令行 `--no-polish`、环境变量 `VOICE_POLISH=0`、以及不配置 `DEEPSEEK_API_KEY`（无 key 时 `polish_text` 直接返回原文）。
+The polish toggle has three equivalent entry points: the `--no-polish` flag, the `VOICE_POLISH=0` environment variable, or simply not setting `DEEPSEEK_API_KEY` (with no key, `polish_text` returns the original text).
 
-## 使用方法
+## Usage
 
 ```bash
 python voice_input.py
 ```
 
-- 默认热键是 **右 Ctrl**：按一下开始录音（提示音），再按一下结束，稍候转写/整理完成后自动上屏到刚才的输入框。热键可用 `--keys` 改成逗号分隔的多个键。
-- 浮窗显示待机 / 录音中 / 转写中 / 整理中 / 出错状态；点麦克风按钮手动开始/停止，点齿轮按钮打开设置窗（模板 + 热词两页），点关闭按钮退出程序。
-- 语音触发词（优先于窗口风格判定）：说话开头带「正式点」「口语一点」改变整理风格，带「翻译成英文」把转写翻译成英文。
-- 语音命令：说「记一下，张伟」把「张伟」加进热词表，「忘掉，张伟」删掉它。
-- 语音模板：说「发示例」把 `snippets.txt` 里 `示例` 对应的内容上屏。
+- The default hotkey is **Right Ctrl**: press once to start recording (chime), press again to stop; after transcription/polishing the text is pasted into the input you were just using. Change it with `--keys` (a comma-separated list).
+- The float bar shows idle / recording / transcribing / polishing / error status. Click the mic to start/stop manually, the gear to open settings (snippets + hotwords tabs), the × to quit.
+- Voice triggers (take priority over the focused-app style): start with "正式点" or "口语一点" to change the polish style, or "翻译成英文" to translate the transcript to English.
+- Voice commands: say "记一下，张伟" to add "张伟" to the hotwords, "忘掉，张伟" to remove it.
+- Voice snippets: say "发示例" to paste the content mapped to `示例` in `snippets.txt`.
 
-## 热词与模板自定义
+All voice commands, triggers, and snippet keys are spoken in Chinese.
 
-两个文件都在工具目录下，UTF-8 编码，首次运行时自动生成内置默认示例，之后每次开始录音都会重新读取（改完不用重启）。
+## Hotwords and snippets
 
-- `hotwords.txt`：一行一个词，忽略空行和以 `#` 开头的注释行。写入的词直传 ASR 作为识别提示（`corpus.context`），同时作为整理时的白名单不被改写。
-- `snippets.txt`：一行一条 `名字=内容`，忽略空行和 `#` 注释。内容里可写 `{日期}` `{时间}` `{星期}`，上屏时替换成当天的值。
+Both files live next to the tool, are UTF-8 encoded, are auto-created with defaults on first run, and are re-read at the start of every recording (no restart needed after editing).
 
-## 隐私说明
+- `hotwords.txt`: one word per line; empty lines and `#` comments are ignored. Words are passed to the ASR as recognition hints (`corpus.context`) and act as a whitelist that polishing won't rewrite.
+- `snippets.txt`: one `name=content` entry per line; empty lines and `#` comments are ignored. Content may contain `{日期}` `{时间}` `{星期}`, replaced with today's values on paste.
 
-- 录音音频实时上传火山引擎云端做识别；整理时转写文本发给 DeepSeek API。
-- 不采集、不上传其他任何数据（无遥测、无统计上报）。
-- 运行日志 `voice_input.log`、热词表 `hotwords.txt`、模板 `snippets.txt` 都只存在本地工具目录。
+## Privacy
 
-## 文件结构
+- Audio is uploaded to Volcengine in real time for recognition; the transcript is sent to the DeepSeek API when polishing.
+- Nothing else is collected or uploaded (no telemetry, no analytics).
+- The runtime log `voice_input.log`, hotwords `hotwords.txt`, and snippets `snippets.txt` stay local to the tool directory.
+
+## File structure
 
 ```
-voice_input.py       主程序：tkinter 置顶浮窗 + 录音 + 上屏
-volc_asr.py          火山流式 ASR 协议模块（自包含 WebSocket 编解码）
-requirements.txt     依赖清单
-chime_start.wav      录音开始提示音
-chime_end.wav        录音结束提示音
-hotwords.txt         热词表（首次运行自动生成，已 gitignore）
-snippets.txt         语音模板（首次运行自动生成，已 gitignore）
-voice_input.log      运行日志（运行中生成，已 gitignore）
+voice_input.py        main program: tkinter float bar + recording + pasting
+volc_asr.py           Volcengine streaming ASR protocol module (self-contained WebSocket codec)
+requirements.txt      dependencies
+chime_start.wav       recording-start chime
+chime_end.wav         recording-end chime
+hotwords.txt          hotword list (auto-created on first run, gitignored)
+snippets.txt          voice snippets (auto-created on first run, gitignored)
+voice_input.log       runtime log (gitignored)
 ```
 
-## 命令行参数
+## Command-line arguments
 
-| 参数 | 说明 |
+| Argument | Description |
 | --- | --- |
-| （无参数） | 启动 GUI，进入热键监听 |
-| `--test 秒` | 自测：录 N 秒、转写并打印，不上屏 |
-| `--test-stream 秒` | 无麦自测：读同目录 `test_tts.wav` 边录边传，打印文本与末包耗时 |
-| `--test-polish 文本` | 无麦自测：跑触发词/语音命令/整理全链路并打印结果 |
-| `--debug` | 诊断：30 秒内打印所有按键名，排查热键冲突 |
-| `--keys 键列表` | 覆盖默认热键，逗号分隔（默认 `right ctrl`） |
-| `--no-polish` | 禁用 DeepSeek 书面语整理 |
-| `--learn-words` | 从 `voice_input.log` 挖掘高频纠正词，≥3 次自动入库，其余交 LLM 提名 |
+| (none) | Start the GUI and listen for the hotkey |
+| `--test SECONDS` | Self-test: record N seconds, transcribe and print, without pasting |
+| `--test-stream SECONDS` | Mic-free self-test: read `test_tts.wav` from the same directory and stream it, print the text and last-packet latency |
+| `--test-polish TEXT` | Mic-free self-test: run the trigger / voice-command / polish pipeline on TEXT and print the result |
+| `--debug` | Diagnostics: print every key name for 30 seconds to debug hotkey conflicts |
+| `--keys LIST` | Override the default hotkey, comma-separated (default `right ctrl`) |
+| `--no-polish` | Disable DeepSeek polishing |
+| `--learn-words` | Mine frequent corrections from `voice_input.log`; ≥3 occurrences are auto-added, the rest are nominated by the LLM |
 
-## 常见问题
+## FAQ
 
-- **热键没反应**：`keyboard` 库在 Windows 上的全局热键钩子通常需要管理员权限。右键「以管理员身份运行」，或用 `--debug` 打印按键名确认钩子是否收到按键。
-- **`--test-stream` 报找不到文件**：仓库未收录 `test_tts.wav`，需自备一个 16kHz 的测试 wav 放到工具目录。
+- **The hotkey does nothing**: the `keyboard` library's global hotkey hook on Windows usually needs admin rights. Right-click → "Run as administrator", or use `--debug` to print key names and confirm the hook receives them.
+- **`--test-stream` says file not found**: `test_tts.wav` is not included in the repo — supply your own 16 kHz test wav in the tool directory.
 
 ## License
 
-[MIT](LICENSE) © 2026 杭州三农网络科技有限公司
+[MIT](LICENSE) © 2026 Hangzhou Sannong Network Technology Co., Ltd.
