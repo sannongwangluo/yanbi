@@ -1,0 +1,12 @@
+*.log
+test_tts.wav
+hotwords.txt
+snippets.txt
+*.bat
+*.vbs
+*.vbs.bak
+优化方向备忘.md
+__pycache__/
+.venv/
+dist/
+build/
