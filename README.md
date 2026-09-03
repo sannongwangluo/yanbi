@@ -50,6 +50,18 @@ YanBi uses a cloud API — there is no local model. Both the benefits and the co
 
 If you'd rather keep audio off the cloud, or want a fully offline, pay-once experience, a local offline tool like CapsWriter-Offline is a better fit.
 
+## vs free options (Win+H built-in, iFlytek/讯飞)
+
+Windows has Win+H voice typing built in, and iFlytek is free — why YanBi? **Free tools transcribe what you said; YanBi pastes what you meant to write.**
+
+![YanBi vs free options](docs/images/vs-free.png)
+
+- **Speech → written Chinese**: spoken rambling goes in, polished written text comes out (DeepSeek), with per-app style (chat / doc / standard) — free tools paste raw transcripts
+- **Hotword loop**: your jargon goes straight to the ASR and is protected during polishing, so it gets more accurate the more you use it
+- **Snippets & voice commands**: say "发X" to paste a saved block; "记一下" to teach a word
+- **Your own API keys**: no account, no ads, no consumer-cloud ecosystem
+- Trade-off, honestly: YanBi is pay-per-use and needs ~10 minutes of API setup; if you just want free and instant, Win+H or iFlytek will do
+
 ## Installation
 
 Requires Python 3.12+ (`numpy>=2.5.2` in `requirements.txt` needs 3.12, `websockets>=17` needs 3.11; the code itself runs on lower versions, but 3.12+ is documented to match the dependency floors).
