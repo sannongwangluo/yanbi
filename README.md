@@ -153,7 +153,6 @@ voice_input.log       runtime log (gitignored)
 
 ## Roadmap
 
-- Demo GIF (coming soon)
 - Automated CI packaging (added in this change)
 - Customizable voice triggers
 - More translation target languages
