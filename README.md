@@ -2,9 +2,17 @@
 
 # YanBi 言笔 · Voice Typing for Windows
 
+[![License: MIT](https://img.shields.io/github/license/sannongwangluo/yanbi)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/sannongwangluo/yanbi)](https://github.com/sannongwangluo/yanbi/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sannongwangluo/yanbi/total)](https://github.com/sannongwangluo/yanbi/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D6)](#)
+[![CI](https://img.shields.io/github/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sannongwangluo/yanbi/actions/workflows/ci.yml)
+
 A Windows desktop voice-typing tool that replaces the built-in Win+H. Press a hotkey to start recording, press it again to stop, and the transcript is pasted wherever your cursor was. Recognition runs on Volcengine's Doubao streaming speech recognition (cloud WebSocket); the transcript can optionally be polished into written Chinese by DeepSeek, and a hotword loop corrects recurring misrecognitions.
 
 > YanBi is a Chinese input tool — voice commands and trigger phrases are spoken in Chinese.
+
+> ⬇️ **Download:** [YanBi.exe (latest release)](https://github.com/sannongwangluo/yanbi/releases/latest)
 
 ## Features
 
@@ -140,6 +148,13 @@ voice_input.log       runtime log (gitignored)
 
 - **The hotkey does nothing**: the `keyboard` library's global hotkey hook on Windows usually needs admin rights. Right-click → "Run as administrator", or use `--debug` to print key names and confirm the hook receives them.
 - **`--test-stream` says file not found**: `test_tts.wav` is not included in the repo — supply your own 16 kHz test wav in the tool directory.
+
+## Roadmap
+
+- Demo GIF (coming soon)
+- Automated CI packaging (added in this change)
+- Customizable voice triggers
+- More translation target languages
 
 ## License
 

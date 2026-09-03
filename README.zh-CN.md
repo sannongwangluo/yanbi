@@ -2,7 +2,15 @@
 
 # YanBi 言笔 · Voice Typing for Windows
 
+[![License: MIT](https://img.shields.io/github/license/sannongwangluo/yanbi)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/sannongwangluo/yanbi)](https://github.com/sannongwangluo/yanbi/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sannongwangluo/yanbi/total)](https://github.com/sannongwangluo/yanbi/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D6)](#)
+[![CI](https://img.shields.io/github/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sannongwangluo/yanbi/actions/workflows/ci.yml)
+
 Windows 桌面语音输入工具，用来替代系统自带的 Win+H：按下热键开始录音、再按一次结束，转写结果自动粘贴到当前输入焦点处。识别走火山引擎豆包大模型流式语音识别（云端 WebSocket），转写后可选用 DeepSeek 整理成书面语，并带一套热词纠错闭环。
+
+> ⬇️ **下载：** [YanBi.exe（最新版）](https://github.com/sannongwangluo/yanbi/releases/latest)
 
 ## 特性
 
@@ -136,6 +144,13 @@ voice_input.log      运行日志（运行中生成，已 gitignore）
 
 - **热键没反应**：`keyboard` 库在 Windows 上的全局热键钩子通常需要管理员权限。右键「以管理员身份运行」，或用 `--debug` 打印按键名确认钩子是否收到按键。
 - **`--test-stream` 报找不到文件**：仓库未收录 `test_tts.wav`，需自备一个 16kHz 的测试 wav 放到工具目录。
+
+## 路线图
+
+- 演示 GIF（即将补充）
+- CI 自动打包（本次已加入）
+- 自定义语音触发词
+- 更多翻译目标语言
 
 ## License
 
