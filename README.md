@@ -1,4 +1,4 @@
-# voice-input 语音输入法
+# YanBi 言笔 · 语音输入法
 
 Windows 桌面语音输入工具，用来替代系统自带的 Win+H：按下热键开始录音、再按一次结束，转写结果自动粘贴到当前输入焦点处。识别走火山引擎豆包大模型流式语音识别（云端 WebSocket），转写后可选用 DeepSeek 整理成书面语，并带一套热词纠错闭环。
 
@@ -104,4 +104,4 @@ voice_input.log      运行日志（运行中生成，已 gitignore）
 
 ## License
 
-待定（MIT 候选）。
+[MIT](LICENSE) © 2026 sannongwangluo
