@@ -12,6 +12,8 @@ Windows 桌面语音输入工具，用来替代系统自带的 Win+H：按下热
 
 > ⬇️ **下载：** [YanBi.exe（最新版）](https://github.com/sannongwangluo/yanbi/releases/latest)
 
+![Demo](docs/images/demo.gif)
+
 ## 特性
 
 - 火山云端流式 ASR：边录边传，松手即出全文；流式失败自动回退整段识别，绝不丢结果

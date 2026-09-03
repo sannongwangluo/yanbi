@@ -14,6 +14,8 @@ A Windows desktop voice-typing tool that replaces the built-in Win+H. Press a ho
 
 > ⬇️ **Download:** [YanBi.exe (latest release)](https://github.com/sannongwangluo/yanbi/releases/latest)
 
+![Demo](docs/images/demo.gif)
+
 ## Features
 
 - Cloud streaming ASR: audio is streamed as you speak and the full text appears the moment you stop; if streaming fails it falls back to full-utterance recognition, so a result is never lost
