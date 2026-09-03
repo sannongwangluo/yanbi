@@ -68,7 +68,15 @@ except Exception:
     _HAS_STREAM_DEPS = False
 
 SAMPLE_RATE = 16000
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _base_dir():
+    # 冻结态（PyInstaller 单文件 exe）用 exe 所在目录，避免日志/词表写进临时解压目录 _MEIPASS
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+BASE_DIR = _base_dir()
 LOG_PATH = os.path.join(BASE_DIR, "voice_input.log")
 
 # 热词表（corpus.context 直传 + LLM 整理白名单的单一来源）：运行时从同目录 hotwords.txt 读
